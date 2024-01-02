@@ -1,0 +1,21 @@
+spring:
+  profiles:
+    active: local
+  jwt:
+    secret: NiOeyFbN1Gqo10bPgUyTFsRMkJpGLXSvGP04eFqj5B30r5TcrtlSXfQ7TndvYjNvfkEKLqILn0j1SmKODO1Yw3JpBBgI3nVPEahqxeY8qbPSFGyzyEVxnl4AQcrnVneI
+    validation_second : 1000L * 60 * 60 * 12
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/LOGIN_DB?
+    username: choco
+    password: apfhddl12#
+
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+#  configuration:
+#    map-underscore-to-camel-case: true
+#  type-aliases-package:
+
+
+
