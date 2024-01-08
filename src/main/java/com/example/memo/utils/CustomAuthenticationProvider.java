@@ -8,6 +8,7 @@ import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     private final MyUserDetailService myUserDetailService;
     private final PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -26,18 +28,20 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String username = (String) authentication.getPrincipal();
         String password = (String) authentication.getCredentials();
 
+        System.out.println("userId : " + username);
+        System.out.println("password : " + password);
+
+        bCryptPasswordEncoder.encode(password);
+
         UserVo userVo = (UserVo) myUserDetailService.loadUserByUsername(username);
 
         try {
-            if (!passwordEncoder.matches("1234", password)) {
+            if (!passwordEncoder.matches("1234", bCryptPasswordEncoder.encode(password))) {
                 throw new BadCredentialsException("비밀번호 틀렸다.");
             }
         } catch (CredentialsExpiredException e) {
             e.printStackTrace();
         }
-
-
-
 
         return new UsernamePasswordAuthenticationToken(userVo, null, userVo.getAuthorities());
     }

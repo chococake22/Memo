@@ -1,16 +1,19 @@
 package com.example.memo.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.memo.domain.UserVo;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 public class CommonController {
 
     @PostMapping("/login")
-    public String login() {
+    public String login(@RequestBody UserVo userVo) {
+
+        System.out.println(userVo.getUsername());
+        System.out.println(userVo.getPassword());
 
         System.out.println("로그인 api 호출");
 
