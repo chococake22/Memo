@@ -14,14 +14,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -35,7 +31,9 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtInterceptor jwtInterceptor;
-    private final MyUserDetailService myUserDetailService;
+    private final CustomUserDetailService myUserDetailService;
+
+    private final CustomAuthenticationSuccessHandler successHandler;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -49,7 +47,7 @@ public class SecurityConfig {
     }
 
     private static final String[] AUTH_WHITELIST = {
-            "/", "/api"
+            "/**",
     };
 
     // 여기서 전체적으로 설정을 해줌.
@@ -67,24 +65,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         authorize -> authorize
                                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                                .requestMatchers(AUTH_WHITELIST).permitAll()
+                                .requestMatchers("/api/**").permitAll()    // 해당하는 url 전부 접근 허용
                                 .anyRequest().authenticated()
 
                 ).formLogin(login -> login
                         .loginProcessingUrl("/api/login")
                         .usernameParameter("userId")
                         .passwordParameter("password")
-//                        .defaultSuccessUrl("/api/login-success")
-                        .successHandler(new CustomAuthenticationSuccessHandler())
-                        .failureHandler(new CustomAuthenticationFailureHandler())
-
-                        .permitAll()
+//                        .successHandler(successHandler)  AbstractAuthenticationProcessingFilter를 구성해서 사용하면 successHandler 적용되지 않는다.
+//                        .defaultSuccessUrl("/api/login-success", true)    // 기본적으로 로그인 성공시 '/'로 리다이렉트를 함(바로 직전 url에서 넘어오는데 이게 '/')
                 )
-                // 원래 default로 동작했던 UsernamePasswordAuthenticationFilter 대신에 AbstractAuthenticationProcessingFilter가 동작하도록 설정함.(필터 바꿔치기)
+                // 원래 default로 동작했던 UsernamePasswordAuthenticationFilter 대신에 AbstractAuthenticationProcessingFilter가 동작하도록 설정함.(필터 바꿔치핻)
                 .addFilterAt(
                         this.abstractAuthenticationProcessingFilter(authenticationManager),
                         UsernamePasswordAuthenticationFilter.class)
                         .logout(Customizer.withDefaults())
+                .httpBasic(Customizer.withDefaults())
                 .build();
     }
 
@@ -103,6 +99,7 @@ public class SecurityConfig {
         return source;
     }
 
+    // authentication 객체를 사용하여 사용자의 인증여부를 확인하는 역할.
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -110,10 +107,14 @@ public class SecurityConfig {
 
     // 직접 만든 로그인 필터(LoginAuthenticationFilter)를 등록해준다
     // /api/login를 요청하면 로그인 필터가 적용된다.
-    public AbstractAuthenticationProcessingFilter abstractAuthenticationProcessingFilter(final AuthenticationManager authenticationManager) {
+    public LoginAuthenticationFilter abstractAuthenticationProcessingFilter(
+            final AuthenticationManager authenticationManager
+    ) {
+
         return new LoginAuthenticationFilter(
                 "/api/login",
                 authenticationManager
         );
     }
+
 }

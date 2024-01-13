@@ -1,6 +1,5 @@
 package com.example.memo.utils;
 
-import com.example.memo.domain.UserVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -8,22 +7,26 @@ import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
-    private final MyUserDetailService myUserDetailService;
+    private final CustomUserDetailService myUserDetailService;
     private final PasswordEncoder passwordEncoder;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
-        System.out.println("검사중");
 
         String username = (String) authentication.getPrincipal();
         String password = (String) authentication.getCredentials();
@@ -31,9 +34,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         System.out.println("userId : " + username);
         System.out.println("password : " + password);
 
-        bCryptPasswordEncoder.encode(password);
-
-        UserVo userVo = (UserVo) myUserDetailService.loadUserByUsername(username);
+        UserDetails user = myUserDetailService.loadUserByUsername(username);
 
         try {
             if (!passwordEncoder.matches("1234", bCryptPasswordEncoder.encode(password))) {
@@ -43,7 +44,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             e.printStackTrace();
         }
 
-        return new UsernamePasswordAuthenticationToken(userVo, null, userVo.getAuthorities());
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("USER"));
+
+        System.out.println("user.getUsername() : " + user.getUsername());
+
+        return new UsernamePasswordAuthenticationToken(user, null, authorities);
     }
 
     @Override
